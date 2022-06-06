@@ -294,7 +294,7 @@
       return {
         item: {
           name: "",
-          price: 0,
+          price: "",
           owner: []
         },
         items: [],
@@ -310,13 +310,13 @@
 
     methods: {
       addItem() {
-        if (this.item.name.length < 1) {
+        if (this.item.name.length < 1 || this.item.price.length < 1) {
           return;
         }
         this.item.price = parseFloat(this.item.price);
         this.items.push(JSON.parse(JSON.stringify(this.item)));
         this.item.name = "";
-        this.item.price = 0;
+        this.item.price = "";
       },
       removeItem(index) {
         this.items.splice(index, 1);
