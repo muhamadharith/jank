@@ -1,9 +1,550 @@
 <!DOCTYPE html>
 
 <html>
-<body>
-  
-<div>Hi</div>
 
-</body>
+  <head>
+    <!-- CSS only -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
+    <!-- JavaScript Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2" crossorigin="anonymous"></script>
+    <!-- icon CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.3/font/bootstrap-icons.css">
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <!-- Vue -->
+    <script src="https://unpkg.com/vue@3"></script>
+    <!-- DataTables -->
+    <link href="https://cdn.datatables.net/1.12.1/css/jquery.dataTables.min.css" rel="stylesheet" crossorigin="anonymous">
+    <script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js" crossorigin="anonymous"></script>
+    <!-- custom style -->
+    <style>
+      .numberCircle,
+      .numberCircle2 {
+        display: inline-block;
+        line-height: 0px;
+        border-radius: 50%;
+        border: 1px solid;
+        margin-right: 8px;
+        width: 30px
+      }
+
+      .numberCircle span {
+        display: inline-block;
+        padding-top: 50%;
+        padding-bottom: 50%;
+        margin-left: 8px;
+      }
+
+      .numberCircle2 span {
+        display: inline-block;
+        padding-top: 50%;
+        padding-bottom: 50%;
+        margin-left: 4px;
+      }
+
+    </style>
+  </head>
+
+  <body>
+    <div id="jank">
+
+      <nav class="navbar sticky-top bg-dark">
+        <div class="container-fluid">
+          <a class="navbar-brand text-white">Jank Calculator v1.0</a>
+
+          <button class="btn btn-outline-light" type="button" @click="changeView('settings')">
+            <i class="bi bi-gear"></i>
+          </button>
+        </div>
+
+        <div class="container-fluid text-white" v-show="this.view.current == 'settings'">
+          <button class="btn btn-outline-light" @click="lastView()">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <label class="mx-auto fs-4">Settings</label>
+          <button class="btn btn-outline-dark" disabled>
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+
+        <div class="container-fluid text-white" v-show="this.view.current == 'list'">
+          <button class="btn btn-outline-dark" disabled>
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <label class="mx-auto fs-4">Item List</label>
+          <button class="btn btn-outline-light" @click="changeView('summary')">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+
+        <div class="container-fluid text-white" v-show="this.view.current == 'summary'">
+          <button class="btn btn-outline-light" @click="changeView('list')">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <label class="mx-auto fs-4">Summary</label>
+          <button class="btn btn-outline-dark" disabled>
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+
+      </nav>
+
+
+
+      <div class="p-3" v-show="this.view.current == 'settings'">
+
+        <div>
+          <h3 class="navbar-brand"><i class="bi bi-coin pe-2"></i>Manage Tax</h3>
+          <div class="form-check" v-for="tax in taxInfo">
+            <input type="radio" :id="tax.id" :value="tax.id" v-model="taxType" />
+            <label class="ps-2" :for="tax.id">
+              {{ tax.name }} {{ tax.description.length > 0 ? "-" : "" }} {{ tax.description }}
+            </label>
+          </div>
+        </div>
+
+        <br>
+
+        <div>
+          <h3 class="navbar-brand"><i class="bi bi-people-fill pe-2"></i>Manage People</h3>
+          <div>
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="person in people">
+                  <td>{{ person.name }}</td>
+                  <td class="text-end">
+                    <button @click="removePerson(person.initial)" class="btn btn-outline-danger ms-5"><i class="bi bi-trash"></i></button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <br>
+
+        <div>
+          <h3 class="navbar-brand"><i class="bi bi-activity pe-2"></i>Dev Options</h3>
+          <button @click="addSampleItems()" class="btn btn-outline-danger">Add sample items</button>
+        </div>
+
+      </div>
+
+
+
+      <div class="p-3" v-show="this.view.current == 'list'">
+
+        <nav class="navbar bg-dark fixed-bottom" style="">
+          <div class="container-fluid">
+            <a class="navbar-brand text-white">Add Item</a>
+            <div class="d-flex">
+              <input v-model="item.name" class="form-control" type="text" placeholder="Item" aria-label="Item">
+              <input v-model="item.price" class="form-control" placeholder="Price" aria-label="Price">
+              <button @click="addItem()" class="btn btn-outline-light"><i class="bi bi-plus"></i></button>
+            </div>
+          </div>
+        </nav>
+
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Price</th>
+              <th></th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(item, key) in items">
+              <td>{{ item.name }}</td>
+              <td>{{ item.price.toFixed(2) }}</td>
+              <td>
+                <span v-for="person in people" @click="toggleOwner(person.initial, key)" :class="person.initial != 'CC' ? 'numberCircle' : 'numberCircle2'" :style="[item.owner.includes(person.initial) ? { 'background': person.color } : { 'background': person.color2 }]"><span>{{ person.initial }}</span></span>
+              </td>
+              <td class="text-end">
+                <button @click="removeItem(key)" class="btn btn-outline-danger"><i class="bi bi-trash"></i></button>
+              </td>
+            </tr>
+            <tr>
+              <td>Total</td>
+              <td>{{ totalPrice.toFixed(2) }}</td>
+              <td></td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+        <br>
+        <br>
+        <br>
+      </div>
+
+
+
+      <div class="p-3" v-show="this.view.current == 'summary'">
+
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Total</th>
+              <th>Paid</th>
+              <th>To Pay</th>
+              <th>To Receive</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template v-for="(info, index) in sortedItems">
+              <tr v-if="info.grandTotal > 0">
+                <td>{{ info.name }}</td>
+                <td>{{ info.grandTotal.toFixed(2) }}</td>
+
+                <td>
+                  <template v-for="person in people">
+                    <input v-if="index == person.initial" v-model="person.paid" class="form-control" placeholder="Paid" aria-label="Paid">
+                  </template>
+                </td>
+                <td>{{ info.toPay.toFixed(2) }}</td>
+                <td>{{ info.toReceive.toFixed(2) }}</td>
+              </tr>
+            </template>
+            <tr>
+              <td>Total</td>
+              <td>{{ totalPrice.toFixed(2) }}</td>
+              <td>{{ totalPaid.toFixed(2) }}</td>
+              <td></td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        ...
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">Save changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+    </div>
+
+  </body>
+
 </html>
+
+<script>
+  const {
+    createApp
+  } = Vue
+
+  const defaultPeople = [{
+      name: "Chean",
+      initial: "C",
+      paid: 0,
+      color: "rgb(255, 79, 104)",
+      color2: "rgb(255, 79, 104, 0.1)"
+    },
+    {
+      name: "Chia Chang",
+      initial: "CC",
+      paid: 0,
+      color: "rgb(108, 232, 144)",
+      color2: "rgb(108, 232, 144, 0.1)"
+    },
+    {
+      name: "Harith",
+      initial: "H",
+      paid: 0,
+      color: "rgb(253, 197, 2)",
+      color2: "rgb(253, 197, 2, 0.1)"
+    },
+    {
+      name: "Ruzain",
+      initial: "R",
+      paid: 0,
+      color: "rgb(117, 97, 255)",
+      color2: "rgb(117, 97, 255, 0.1)"
+    },
+    {
+      name: "Syazril",
+      initial: "S",
+      paid: 0,
+      color: "rgb(46, 113, 255)",
+      color2: "rgb(46, 113, 255, 0.1)"
+    }
+  ];
+
+  const defaultTaxInfo = [{
+    id: 0,
+    name: "None",
+    description: ""
+  }, {
+    id: 1,
+    name: "GST",
+    description: "6%"
+  }, {
+    id: 2,
+    name: "GST + Service Tax",
+    description: "6% + 10% (total * 1.16)"
+  }];
+
+  createApp({
+    data() {
+      return {
+        item: {
+          name: "",
+          price: 0,
+          owner: []
+        },
+        items: [],
+        people: JSON.parse(JSON.stringify(defaultPeople)),
+        taxInfo: JSON.parse(JSON.stringify(defaultTaxInfo)),
+        taxType: 0,
+        view: {
+          current: "list",
+          last: "settings"
+        }
+      }
+    },
+
+    methods: {
+      addItem() {
+        if (this.item.name.length < 1) {
+          return;
+        }
+        this.item.price = parseFloat(this.item.price);
+        this.items.push(JSON.parse(JSON.stringify(this.item)));
+        this.item.name = "";
+        this.item.price = 0;
+      },
+      removeItem(index) {
+        this.items.splice(index, 1);
+      },
+      removePerson(initial) {
+
+        this.items.map((item, index) => {
+
+          if (item.owner.includes(initial)) {
+            let i = item.owner.indexOf(initial);
+            item.owner.splice(i, 1);
+          }
+        });
+
+        let i;
+        for (let index in this.people) {
+          let person = this.people[index];
+          if (person.initial == initial) {
+            i = index;
+          }
+        }
+        this.people.splice(i, 1);
+      },
+      toggleOwner(initial, key) {
+        let item = this.items[key];
+        if (item.owner.includes(initial)) {
+          let index = item.owner.indexOf(initial);
+          item.owner.splice(index, 1);
+        } else {
+          item.owner.push(initial);
+        }
+      },
+
+      changeView(view) {
+        if (this.view.current == view) {
+          return;
+        }
+        this.view.last = this.view.current;
+        this.view.current = view;
+      },
+      lastView() {
+        this.view.current = this.view.last;
+      },
+
+      calculateTotal(sorteditems) {
+        this.items.map((item, index) => {
+          let price = parseFloat(item.price) / item.owner.length;
+
+          item.owner.map((initial, i) => {
+            let sortedItem = {
+              name: item.name,
+              price: price
+            };
+            sorteditems[initial].total += parseFloat(price);
+            sorteditems[initial].items.push(sortedItem);
+          });
+
+        });
+        return sorteditems;
+      },
+      calculateGrandTotal(sorteditems) {
+        for (let index in sorteditems) {
+          let sortedItem = sorteditems[index];
+          sortedItem.grandTotal = sortedItem.total;
+          if (this.taxType == 1) {
+            sortedItem.tax = sortedItem.total * 0.06;
+            sortedItem.grandTotal = sortedItem.total * 1.06;
+          } else if (this.taxType == 2) {
+            sortedItem.tax = sortedItem.total * 0.16;
+            sortedItem.grandTotal = sortedItem.total * 1.16;
+          }
+        }
+        return sorteditems;
+      },
+      calculateToPay(sorteditems) {
+        for (let index in sorteditems) {
+          let info = sorteditems[index];
+
+          this.people.map((person, i) => {
+            if (index == person.initial) {
+              let paid = parseFloat(person.paid);
+              let dif = parseFloat(person.paid) - parseFloat(info.grandTotal);
+              if (dif > 0) {
+                info.toReceive = dif;
+              } else {
+                info.toPay = dif * -1;
+              }
+            }
+          });
+        }
+        return sorteditems;
+      },
+
+      addSampleItems() {
+        this.items = JSON.parse(JSON.stringify(sampleItem));
+      }
+    },
+
+    computed: {
+      sortedItems: function() {
+        let sorteditems = {};
+
+        this.people.map((person, index) => {
+          sorteditems[person.initial] = {
+            name: person.name,
+            total: 0,
+            tax: 0,
+            grandTotal: 0,
+            toPay: 0,
+            toReceive: 0,
+            items: []
+          };
+        });
+
+        sorteditems = this.calculateTotal(sorteditems);
+        sorteditems = this.calculateGrandTotal(sorteditems);
+        sorteditems = this.calculateToPay(sorteditems);
+
+        return sorteditems;
+      },
+      totalPrice: function() {
+        let totalPrice = 0;
+
+        this.items.map((item, index) => {
+          totalPrice += parseFloat(item.price);
+        });
+        if (this.taxType == 1) {
+          totalPrice *= 1.06;
+        } else if (this.taxType == 2) {
+          totalPrice *= 1.16;
+        }
+
+        return totalPrice;
+      },
+      totalPaid: function() {
+        let totalPaid = 0;
+
+        this.people.map((person, index) => {
+          totalPaid += parseFloat(person.paid);
+        });
+
+        return totalPaid;
+      }
+    }
+  }).mount('#jank')
+
+  const sampleItem = [{
+    name: "DIY combo",
+    price: 15,
+    owner: ["S"]
+  }, {
+    name: "sal tsu",
+    price: 9.90,
+    owner: ["R"]
+  }, {
+    name: "yakiniku don",
+    price: 16.90,
+    owner: ["H"]
+  }, {
+    name: "chic kat",
+    price: 14.30,
+    owner: ["CC"]
+  }, {
+    name: "rice",
+    price: 2,
+    owner: ["R"]
+  }, {
+    name: "tea",
+    price: 4,
+    owner: ["CC", "H", "R", "S"]
+  }, {
+    name: "beige",
+    price: 3,
+    owner: ["CC"]
+  }, {
+    name: "beige",
+    price: 3,
+    owner: ["H"]
+  }, {
+    name: "beige",
+    price: 3,
+    owner: ["S"]
+  }, {
+    name: "pink",
+    price: 12,
+    owner: ["CC"]
+  }, {
+    name: "pink",
+    price: 12,
+    owner: ["H"]
+  }, {
+    name: "pink",
+    price: 8,
+    owner: ["R"]
+  }, {
+    name: "red",
+    price: 5,
+    owner: ["CC"]
+  }, {
+    name: "red",
+    price: 5,
+    owner: ["S"]
+  }, {
+    name: "purple",
+    price: 6,
+    owner: ["R"]
+  }, {
+    name: "purple",
+    price: 6,
+    owner: ["S"]
+  }];
+
+</script>
