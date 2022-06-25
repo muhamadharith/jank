@@ -287,6 +287,14 @@
     id: 2,
     name: "GST + Service Tax",
     description: "6% + 10% (total * 1.16)"
+  }, {
+    id: 3,
+    name: "Service Tax",
+    description: "10% (total * 1.10)"
+  }, {
+    id: 4,
+    name: "GST + Service Tax",
+    description: "6% after 10% (total * 1.166)"
   }];
 
   createApp({
@@ -387,6 +395,12 @@
           } else if (this.taxType == 2) {
             sortedItem.tax = sortedItem.total * 0.16;
             sortedItem.grandTotal = sortedItem.total * 1.16;
+          } else if (this.taxType == 3) {
+            sortedItem.tax = sortedItem.total * 0.10;
+            sortedItem.grandTotal = sortedItem.total * 1.10;
+          } else if (this.taxType == 4) {
+            sortedItem.tax = sortedItem.total * 0.166;
+            sortedItem.grandTotal = sortedItem.total * 1.166;
           }
         }
         return sorteditems;
@@ -448,6 +462,10 @@
           totalPrice *= 1.06;
         } else if (this.taxType == 2) {
           totalPrice *= 1.16;
+        } else if (this.taxType == 3) {
+          totalPrice *= 1.10;
+        } else if (this.taxType == 4) {
+          totalPrice *= 1.166;
         }
 
         return totalPrice;
